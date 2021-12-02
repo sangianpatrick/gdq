@@ -6,8 +6,6 @@ import "time"
 type ReceiverConfig struct {
 	// Handler which handles the delayed message
 	Handler Handler
-	// MaxBatch is a total message that will be process at a time, the default is 5
-	MaxBatch int
 	// FetchInterval is time interval to fetch message (millisecond), the default is 200
 	FetchInterval int
 	// FetchTimeout is max wait time before timeout error (milliesecond), the default is 2000

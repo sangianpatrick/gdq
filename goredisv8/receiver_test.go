@@ -25,7 +25,6 @@ var topic = "test-topic"
 func TestReceiver_Success(t *testing.T) {
 	message := "hello"
 	fetchBeforeTime := time.Now().Add(time.Hour * 1)
-	maxBatch := 5
 	rc, mock := redismock.NewClientMock()
 
 	max := fetchBeforeTime.UnixNano() / 1_000_000
@@ -34,7 +33,7 @@ func TestReceiver_Success(t *testing.T) {
 		Min:    "0",
 		Max:    fmt.Sprint(max),
 		Offset: 0,
-		Count:  int64(maxBatch),
+		Count:  1,
 	})
 
 	mockZSlice.SetVal([]redis.Z{
@@ -50,7 +49,6 @@ func TestReceiver_Success(t *testing.T) {
 
 	rec, _ := goredisv8.NewReceiver(rc, gdq.ReceiverConfig{
 		Handler:         handler,
-		MaxBatch:        maxBatch,
 		FetchBeforeTime: &fetchBeforeTime,
 	}, topic)
 
