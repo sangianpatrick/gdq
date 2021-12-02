@@ -1,5 +1,5 @@
 # [gdq] Golang Delay Queue
-GDQ is a library that leverage db or cache to be setup as a delay queue. For *v1*, Only redis can adapt to this library.
+GDQ is a library that leverage db or cache to be setup as a delay queue. For current version, Only redis can adapt to this library.
 
 # Example
 ## Receiver
