@@ -2,6 +2,7 @@ package goredisv8
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -15,19 +16,18 @@ type receiver struct {
 	handler         gdq.Handler
 	closed          chan struct{}
 	topic           string
-	maxBatch        int
 	fetchInterval   time.Duration
 	fetchTimeout    time.Duration
 	closeTime       time.Duration
 	fetchBeforeTime *time.Time
 }
 
+// NewReceiver is a constructor. Make sure the receiver only instantiate once globally accross services for a topic.
 func NewReceiver(client redis.UniversalClient, config gdq.ReceiverConfig, topic string) (rec gdq.Receiver, err error) {
 	closed := make(chan struct{}, 1)
 	defaultFetchInterval := 200
 	defaultFetchTimeout := 2000
 	defaultCloseTime := 500
-	defaultMaxBatch := 5
 
 	if client == nil {
 		return nil, gdq.ErrNoRedisClient
@@ -35,10 +35,6 @@ func NewReceiver(client redis.UniversalClient, config gdq.ReceiverConfig, topic 
 
 	if config.Handler == nil {
 		return nil, gdq.ErrNoHandler
-	}
-
-	if config.MaxBatch <= 0 {
-		config.MaxBatch = defaultMaxBatch
 	}
 
 	if config.FetchInterval <= 0 {
@@ -58,7 +54,6 @@ func NewReceiver(client redis.UniversalClient, config gdq.ReceiverConfig, topic 
 		handler:         config.Handler,
 		closed:          closed,
 		topic:           topic,
-		maxBatch:        defaultMaxBatch,
 		fetchInterval:   time.Duration(defaultFetchInterval) * time.Millisecond,
 		fetchTimeout:    time.Duration(defaultFetchTimeout) * time.Millisecond,
 		closeTime:       time.Duration(defaultCloseTime) * time.Millisecond,
@@ -98,7 +93,17 @@ func (r *receiver) Receive() {
 
 				for _, z := range bunchOfZs {
 					handlerContext := context.Background()
-					r.handler.Handle(handlerContext, z.Member)
+
+					msgRaw, ok := z.Member.(string)
+
+					if !ok {
+						fmt.Println("invalid message")
+						continue
+					}
+
+					m := new(gdq.Message)
+					json.Unmarshal([]byte(msgRaw), m)
+					r.handler.Handle(handlerContext, m)
 				}
 
 			}
@@ -122,7 +127,7 @@ func (r *receiver) pool(ctx context.Context) (bunchOfZs []redis.Z, err error) {
 		Min:    "0",
 		Max:    fmt.Sprint(max),
 		Offset: 0,
-		Count:  int64(r.maxBatch),
+		Count:  1,
 	})
 
 	bunchOfZs, err = zSliceCmd.Result()
