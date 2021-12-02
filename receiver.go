@@ -1,6 +1,6 @@
 package gdq
 
-// Receiver
+// Receiver is a collection of behavior of receiver.
 type Receiver interface {
 	// Receive will pull the queue from stream.
 	// It already run with goroutine
