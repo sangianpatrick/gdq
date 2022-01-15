@@ -72,7 +72,7 @@ func (r *receiver) Receive() {
 			case <-time.After(r.fetchInterval):
 				ctx, cancel := context.WithTimeout(context.Background(), r.fetchTimeout)
 
-				bunchOfZs, err := r.pool(ctx)
+				bunchOfZs, err := r.poll(ctx)
 				if err != nil {
 					cancel()
 					log.Println(err)
@@ -116,7 +116,7 @@ func (r *receiver) Close() {
 	<-time.After(r.closeTime)
 }
 
-func (r *receiver) pool(ctx context.Context) (bunchOfZs []redis.Z, err error) {
+func (r *receiver) poll(ctx context.Context) (bunchOfZs []redis.Z, err error) {
 	max := time.Now().UnixNano() / 1_000_000
 
 	if r.fetchBeforeTime != nil {
